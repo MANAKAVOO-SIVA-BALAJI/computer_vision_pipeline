@@ -1,0 +1,23 @@
+name: cv_env
+channels:
+  - pytorch
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - numpy
+  - pandas
+  - tqdm
+  - matplotlib
+  - scikit-image
+  - jupyterlab
+  - opencv
+  - pytorch
+  - torchvision
+  - torchaudio
+  - cpuonly
+  - pip:
+      - pillow
+      - ultralytics
+      - albumentations
+      - ipywidgets

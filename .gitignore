@@ -6,6 +6,20 @@ __pycache__/
 # C extensions
 *.so
 
+#custom ignore
+videos/
+dev.env
+# *mp4
+saved_frames/
+practise/
+detected_frames/
+data_collection/
+attendance.csv
+
+
+
+
+
 # Distribution / packaging
 .Python
 build/

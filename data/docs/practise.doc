@@ -1,0 +1,11 @@
+uv venv .venv --python=3.10
+
+.venv/scripts/activate
+
+
+
+opencv-python==4.8.0.76
+numpy==1.23.5
+tensorflow==2.12.0
+mtcnn==0.1.1
+pip install onvif_zeep
