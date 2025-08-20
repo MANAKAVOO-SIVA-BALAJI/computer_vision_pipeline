@@ -13,6 +13,12 @@ logging.basicConfig(
 )
 backend_url="http://127.0.0.1:8001/store_attendance"
 
+attendance_folder = "attendance_data"
+if not os.path.exists(attendance_folder):
+    os.makedirs(attendance_folder)
+
+
+
 class MetadataHandler:
     def __init__(self, backend_url="http://127.0.0.1:8001/store_attendance", active_window=300, csv_file="attendance.csv"):
         self.backend_url = backend_url
@@ -26,7 +32,7 @@ class MetadataHandler:
             "timestamp": int(now),
             "label": label,
         }
-
+        return None
         try:
             response = requests.post(self.backend_url, json=payload, timeout=5)
             if response.status_code == 200:
@@ -76,16 +82,19 @@ class MetadataHandler:
         filtered_data = [row for row in data if row.get("label") != "Unknown"]
         if not filtered_data:
             return
+        
+        attendance_file_name = datetime.now().strftime("%Y_%m_%d") + "_attendance.csv"
+        attendance_file = os.path.join(attendance_folder, attendance_file_name)
 
         with self.lock:
-            file_exists = os.path.isfile(self.csv_file)
-            with open(self.csv_file, mode="a", newline="") as f:
+            file_exists = os.path.isfile(attendance_file)
+            with open(attendance_file, mode="a", newline="") as f:
                 writer = csv.DictWriter(f, fieldnames=["label", "timestamp"])
                 if not file_exists:
                     writer.writeheader()
                 writer.writerows(filtered_data)
 
-        logger.info(f"{len(filtered_data)} row(s) appended to {self.csv_file}")
+        logger.info(f"{len(filtered_data)} row(s) appended to {attendance_file}")
 
 def store_attendance(data, csv_file="attendance.csv"):
     """

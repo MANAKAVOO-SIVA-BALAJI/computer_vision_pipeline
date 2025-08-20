@@ -3,6 +3,8 @@ from fastapi import FastAPI
 from src.motion_detector import MotionDetector
 from src.face_recognition_pipeline import FaceRecognitionPipeline
 import logging 
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -28,7 +30,7 @@ def start_pipeline():
             camera_rtsp_url="rtsp://admin:Kadit1234@192.168.0.108:554/h264Preview_01_main",
             motion_detector=detector,
             window_seconds=10,
-            frame_skip=10
+            frame_skip=3
         )
 
         pipeline_thread = threading.Thread(target=pipeline.run_pipeline, daemon=True)

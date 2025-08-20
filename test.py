@@ -10,8 +10,8 @@ if __name__ == "__main__":
     # Dummy motion detector (not used in test mode)
     motion_detector = MotionDetector("192.168.0.108", 8000, "admin", "Kadit1234")
 
-    # video_source = "rtsp://admin:Kadit1234@192.168.0.108:554/h264Preview_01_main"
-    video_source = "src/test_video.mp4"
+    video_source = "rtsp://admin:Kadit1234@192.168.0.108:554/h264Preview_01_main"
+    # video_source = "src/test_video.mp4"
     # video_source = 0
 
     pipeline = FaceRecognitionPipeline(
