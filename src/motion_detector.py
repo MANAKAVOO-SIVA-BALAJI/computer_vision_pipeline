@@ -76,7 +76,7 @@ class MotionDetector:
         """Main method to check motion; handles subscription expiry and reconnection."""
         now_utc = datetime.datetime.now(datetime.timezone.utc)
 
-        return True
+        # return True
     
         # If no subscription or expired → reconnect
         if self.pull_service is None or self.termination_time is None or \

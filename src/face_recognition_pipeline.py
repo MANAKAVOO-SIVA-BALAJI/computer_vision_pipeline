@@ -12,6 +12,16 @@ import numpy as np
 import pickle
 from insightface.app import FaceAnalysis
 from ultralytics import YOLO
+import onnxruntime as ort
+
+# # Suppress info logs
+sess_options = ort.SessionOptions()
+sess_options.log_severity_level = 2  # only WARNING and above
+
+# # Initialize FaceAnalysis with session options
+# app = FaceAnalysis(session_options=sess_options)
+# app.prepare(ctx_id=-1)  # 0 = GPU, -1 = CPU
+
 
 from src.motion_detector import MotionDetector
 from src.face_recognise import recognize_faces_in_frame
@@ -38,8 +48,8 @@ AOI_POLYGON = np.array([
 ], dtype=np.int32)
 
 model = YOLO(YOLO_MODEL_PATH)
-face_analyzer = FaceAnalysis(name="buffalo_l", root="~/.insightface")
-face_analyzer.prepare(ctx_id=0, det_size=(640, 640))
+face_analyzer = FaceAnalysis(name="buffalo_l", root="~/.insightface",session_options=sess_options)
+face_analyzer.prepare(ctx_id=-1, det_size=(640, 640)) # 0 = GPU, -1 = CPU 
 
 with open(CACHE_PATH, "rb") as f:
     database = pickle.load(f)
@@ -179,13 +189,20 @@ class FaceRecognitionPipeline:
 
                         current_frame = self.frame_buffer[-1]
                         processed_frames += 1
+                        
+                        frame_processing_start = time.time()
+
                         result = self.recognize_face(current_frame)
+
+                        time_taken = time.time() - frame_processing_start
+
+                        print(f"[INFO] Frame processed in {time_taken:.2f}s")
 
                         for face in result:
                             logger.info(f" - Track ID: {face['track_id']}, Label: {face['label']}, Confidence: {face['confidence']}")
 
                         labels = []
-                        # annotate + save
+
                         for face in result:
                             x1, y1, x2, y2 = face['bbox']
                             label = f"{face['label']} ({face['confidence']:.2f})"
@@ -193,13 +210,22 @@ class FaceRecognitionPipeline:
                             cv2.rectangle(current_frame, (x1, y1), (x2, y2), color, 2)
                             cv2.putText(current_frame, label, (x1, y1 - 10),
                                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+                            cv2.polylines(current_frame, [AOI_POLYGON], isClosed=True, color=(255, 0, 0), thickness=2)
+
                             if face['label'] != "Unknown":
                                 labels.append(face['label'])
-                        if result:
-                            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-                            save_path = os.path.join(save_dir, f"frame_{timestamp}.jpg")
-                            cv2.imwrite(save_path, current_frame)
 
+                        file_name = "_".join(labels)
+                        if not file_name:
+                            file_name = "Unknown"
+
+                        if result:
+                            timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S_%f")
+                            save_path = os.path.join(save_dir, f"{file_name}_{timestamp}.jpg")
+                            cv2.imwrite(save_path, current_frame)
+                            for face in result:
+                                print(f"Label: {face['label']}, Confidence: {face['confidence']}")                           
+                        
                         if labels:
                             self.metadata_handler.handle_detection(labels)
 
@@ -216,8 +242,7 @@ class FaceRecognitionPipeline:
                     if not no_motion_logged:
                         logger.info("[INFO] No motion detected, waiting...")
                         no_motion_logged = True
-                        no_motion_start_time = time.time()   # <-- track when no motion started
-                    # time.sleep(0.2)
+                        no_motion_start_time = time.time()   
 
         except Exception as e:
             logger.error(f"[ERROR] While running pipeline: {e}")
